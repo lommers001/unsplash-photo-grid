@@ -7,6 +7,11 @@ function App() {
     accessKey: "0d54d7bf8f81c9ee80a75d9e1263fbb6b8267fad9d908e597b9f7c4f6bcdee23"
   });
 
+  function searchOnEnterPress(event) {
+    if (event.keyCode == '13')
+      setQuery(event.target.value );
+  }
+
   const PhotoComp = ({ photo }) => {
     const { user, urls } = photo;
 
@@ -26,18 +31,19 @@ function App() {
     );
   };
 
+  const [feedSearch, setQuery] = useState('');
   const [data, setPhotosResponse] = useState(null);
 
   useEffect(() => {
-    api.photos
-      .getRandom({ count: 12, orientation: "landscape" })
+    const searchRequest = feedSearch.length != 0 ? api.search.getPhotos({ query: feedSearch, perPage: 12, orientation: "landscape" }) : api.photos.getRandom({ count: 12, orientation: "landscape" });
+    searchRequest
       .then(result => {
         setPhotosResponse(result);
-      })
-      .catch(() => {
-        console.log("something went wrong!");
+     })
+      .catch((error) => {
+        console.log(error);
       });
-  }, []);
+  }, [feedSearch]);
 
   if (data === null) {
     return <div>Loading...</div>;
@@ -50,10 +56,14 @@ function App() {
     );
   } else {
     //Show photos
+    const photoArray = data.response.results != undefined ? data.response.results : data.response;
     return (
       <div className="feed">
+        <input placeholder="Search for images..." id="feedSearchBar" type="search" onKeyUp={(e) => searchOnEnterPress(e)}/>
+        <button onClick={(e) => setQuery(e.target.previousElementSibling.value)}>Search</button>
+        <br />
         <ul className="columnUl">
-          {data.response.map(photo => (
+          {photoArray.map(photo => (
             <li key={photo.id} className="li">
               <PhotoComp photo={photo} />
             </li>
