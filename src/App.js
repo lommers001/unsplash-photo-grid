@@ -12,16 +12,34 @@ function App() {
       setQuery(event.target.value );
   }
 
-  const PhotoComp = ({ photo }) => {
-    const { user, urls } = photo;
+  const [feedSearch, setQuery] = useState('');
+  const [data, setPhotosResponse] = useState(null);
+  const [modalState, setModalState] = useState({visible: false, url: ''});
 
+  const Modal = ({ visible, url }) => {
+    if(!visible) return (
+      <Fragment></Fragment>
+    );
     return (
       <Fragment>
-        <div className="img" style={{backgroundImage: "url("+urls.regular+")"}}></div>
+        <div className="overlay" onClick={() => setModalState({visible: false})}>
+          <img className="modal-img" alt="" src={url} onClick={() => setModalState({visible: false})} />
+        </div>
+      </Fragment>
+    );
+  };
+
+  const PhotoComp = ({ photo }) => {
+    const { user, urls } = photo;
+    
+    return (
+      <Fragment>
+        <div className="img" style={{backgroundImage: "url("+urls.regular+")"}} onClick={(e) => setModalState({visible: true, url: urls.regular})}></div>
         <figcaption>
           <a
             className="credit"
             target="_blank"
+            rel="noreferrer"
             href={`https://unsplash.com/@${user.username}`}
           >
             {user.name}
@@ -30,9 +48,6 @@ function App() {
       </Fragment>
     );
   };
-
-  const [feedSearch, setQuery] = useState('');
-  const [data, setPhotosResponse] = useState(null);
 
   useEffect(() => {
     const searchRequest = feedSearch.length != 0 ? api.search.getPhotos({ query: feedSearch, perPage: 12, orientation: "landscape" }) : api.photos.getRandom({ count: 12, orientation: "landscape" });
@@ -56,9 +71,14 @@ function App() {
     );
   } else {
     //Show photos
-    const photoArray = data.response.results != undefined ? data.response.results : data.response;
+    const photoArray = data.response.results !== undefined ? data.response.results : data.response;
     return (
       <div className="feed">
+        <Modal
+          visible={modalState.visible}
+          url={modalState.url}
+        >
+        </Modal>
         <input placeholder="Search for images..." id="feedSearchBar" type="search" onKeyUp={(e) => searchOnEnterPress(e)}/>
         <button onClick={(e) => setQuery(e.target.previousElementSibling.value)}>Search</button>
         <br />
